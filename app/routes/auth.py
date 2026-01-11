@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from rich import print, print_json
-from status_codes import Codes
+from app.routes.status_codes import Codes
 try:
     from app.supabase_client import get_supabase
     supabase = get_supabase()
@@ -9,7 +9,6 @@ except ValueError as e:
     supabase = None
 
 auth_bp = Blueprint('auth', __name__)
-
 
 @auth_bp.route('/signup', methods=['POST'])
 def signup():

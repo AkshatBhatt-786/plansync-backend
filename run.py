@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 install()
-print_figlet("Backend")
+print_figlet("DUHACKS 5.0")
 app = create_app()
  
 if __name__ == "__main__":
