@@ -1,4 +1,13 @@
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+from rich import print
+
+
+env_path = Path('.') / '.env.example'
+print(f"Loading [bold red].env[/] from: [blue u]{env_path.absolute()}[/]")
+print(f".env exists: [bold green]{'201' if env_path.exists() else '400'}[/]")  
+load_dotenv(env_path)
 
 # Author: @AkshatBhatt-786
 class Config:

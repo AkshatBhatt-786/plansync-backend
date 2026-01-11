@@ -1,5 +1,5 @@
 import os
-from config import config
+from .config import config
 from flask import current_app
 from supabase import create_client, Client
 
@@ -9,8 +9,9 @@ class SupabaseClient:
     @classmethod
     def get_client(cls):
         if cls._instance is None:
-            supabase_url = config.get('development').SUPABASE_URL
-            supabase_key = config.get('developement').SUPABASE_KEY
+            config_class = config['default']()
+            supabase_url = config_class.SUPABASE_URL
+            supabase_key = config_class.SUPABASE_KEY
 
             if not supabase_url or not supabase_key:
                 raise ValueError("Supabase URL and Key must be set in environment variables")
