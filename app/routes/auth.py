@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from rich import print, print_json
 try:
     from app.supabase_client import get_supabase
     supabase = get_supabase()
@@ -6,46 +7,88 @@ except ValueError as e:
     print(f"Warning: Supabase not configured. Error: {e}")
     supabase = None
 
-auth_bp = Blueprint('auth/accounts', __name__)
+auth_bp = Blueprint('auth', __name__)
 
 ERROR_STATUS_CODE = 400
 SUCCESS_STATUS_CODE = 201
+SERVICE_NOT_AVAILABLE_STATUS_CODE = 500
 
 @auth_bp.route('/signup', methods=['POST'])
 def signup():
     try:
-        data = request.json
+        data = request.get_json()
         email = data.get('email')
         password = data.get('password')
 
-        if not email and not password:
-            return jsonify({'error': 'Email and password is required'}), ERROR_STATUS_CODE
-        else:
+        if not email or not password:
+            return jsonify({'error': 'Email and password are required'}), ERROR_STATUS_CODE
+        
+        if supabase is None:
+            return jsonify({'error': 'Backend service unavailable'}), SERVICE_NOT_AVAILABLE_STATUS_CODE
+        
+        try:
             response = supabase.auth.sign_up({
                 'email': email,
                 'password': password
             })
-
-            return jsonify({
-                'message': 'User created successfully',
-                'user': {
-                    'id': response.user.id,
-                    'email': response.user.email
-                }
-            }), SUCCESS_STATUS_CODE
+            
+            # //print(response)
+            
+            if hasattr(response, 'user') and response.user:
+                print(f"User created/retrieved: ID={response.user.id}")
+                
+                # Check if this is a new user or existing
+                # Supabase doesn't clearly differentiate in response
+                
+                return jsonify({
+                    'message': 'User processed successfully',
+                    'user': {
+                        'id': response.user.id,
+                        'email': response.user.email,
+                        'created_at': getattr(response.user, 'created_at', 'unknown'),
+                        'email_confirmed_at': getattr(response.user, 'email_confirmed_at', None)
+                    },
+                    'note': 'If user already exists, this just returns the existing user'
+                }), SUCCESS_STATUS_CODE
+            else:
+                return jsonify({'error': 'No user object in response'}), ERROR_STATUS_CODE
+                
+        except Exception as supabase_error:
+            print(f"Supabase error: {supabase_error}")
+            return jsonify({'error': str(supabase_error)}), ERROR_STATUS_CODE
         
     except Exception as e:
-        return jsonify({'error': str(e)}), ERROR_STATUS_CODE
-
+        print(f"Signup error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 400
+    
 @auth_bp.route('/login', methods=['POST'])
 def login():
     try:
-        data = request.json
+        data = None
+        if request.is_json:
+            data = request.get_json()
+        else:
+            try:
+                data = request.get_json(force=True, silent=True)
+            except:
+                data = request.form.to_dict()
+
+        if data is None:
+            return jsonify({'error': 'No data provided or invalid JSON'}), ERROR_STATUS_CODE
+        
         email = data.get('email')
         password = data.get('password')
-        
+
         if not email or not password:
-            return jsonify({'error': 'Email and password required'}), ERROR_STATUS_CODE
+            return jsonify({'error': 'Email and password are required'}), ERROR_STATUS_CODE
+        
+        if supabase is None:
+            return jsonify({'error': 'Backend service unavailable'}), SERVICE_NOT_AVAILABLE_STATUS_CODE
+        
+        email = data.get('email')
+        password = data.get('password')
         
         response = supabase.auth.sign_in_with_password({
             'email': email,
@@ -63,7 +106,7 @@ def login():
     
     except Exception as e:
         return jsonify({'error': str(e)}), ERROR_STATUS_CODE
-    
+
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
     try:
