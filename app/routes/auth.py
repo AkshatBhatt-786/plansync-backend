@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from rich import print, print_json
+from status_codes import Codes
 try:
     from app.supabase_client import get_supabase
     supabase = get_supabase()
@@ -9,9 +10,6 @@ except ValueError as e:
 
 auth_bp = Blueprint('auth', __name__)
 
-ERROR_STATUS_CODE = 400
-SUCCESS_STATUS_CODE = 201
-SERVICE_NOT_AVAILABLE_STATUS_CODE = 500
 
 @auth_bp.route('/signup', methods=['POST'])
 def signup():
@@ -21,10 +19,10 @@ def signup():
         password = data.get('password')
 
         if not email or not password:
-            return jsonify({'error': 'Email and password are required'}), ERROR_STATUS_CODE
+            return jsonify({'error': 'Email and password are required'}), Codes.ERROR
         
         if supabase is None:
-            return jsonify({'error': 'Backend service unavailable'}), SERVICE_NOT_AVAILABLE_STATUS_CODE
+            return jsonify({'error': 'Backend service unavailable'}), Codes.SERVICE_NOT_AVAILABLE
         
         try:
             response = supabase.auth.sign_up({
@@ -49,13 +47,13 @@ def signup():
                         'email_confirmed_at': getattr(response.user, 'email_confirmed_at', None)
                     },
                     'note': 'If user already exists, this just returns the existing user'
-                }), SUCCESS_STATUS_CODE
+                }), Codes.SUCCESS
             else:
-                return jsonify({'error': 'No user object in response'}), ERROR_STATUS_CODE
+                return jsonify({'error': 'No user object in response'}), Codes.ERROR
                 
         except Exception as supabase_error:
             print(f"Supabase error: {supabase_error}")
-            return jsonify({'error': str(supabase_error)}), ERROR_STATUS_CODE
+            return jsonify({'error': str(supabase_error)}), Codes.ERROR
         
     except Exception as e:
         print(f"Signup error: {e}")
@@ -76,16 +74,16 @@ def login():
                 data = request.form.to_dict()
 
         if data is None:
-            return jsonify({'error': 'No data provided or invalid JSON'}), ERROR_STATUS_CODE
+            return jsonify({'error': 'No data provided or invalid JSON'}), Codes.ERROR
         
         email = data.get('email')
         password = data.get('password')
 
         if not email or not password:
-            return jsonify({'error': 'Email and password are required'}), ERROR_STATUS_CODE
+            return jsonify({'error': 'Email and password are required'}), Codes.ERROR
         
         if supabase is None:
-            return jsonify({'error': 'Backend service unavailable'}), SERVICE_NOT_AVAILABLE_STATUS_CODE
+            return jsonify({'error': 'Backend service unavailable'}), Codes.SERVICE_NOT_AVAILABLE
         
         email = data.get('email')
         password = data.get('password')
@@ -102,32 +100,32 @@ def login():
                 'id': response.user.id,
                 'email': response.user.email
             }
-        }), SUCCESS_STATUS_CODE
+        }), Codes.SUCCESS
     
     except Exception as e:
-        return jsonify({'error': str(e)}), ERROR_STATUS_CODE
+        return jsonify({'error': str(e)}), Codes.ERROR
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
     try:
         # Logout from Supabase
         supabase.auth.sign_out()
-        return jsonify({'message': 'Logged out successfully'}), SUCCESS_STATUS_CODE
+        return jsonify({'message': 'Logged out successfully'}), Codes.SUCCESS
     except Exception as e:
-        return jsonify({'error': str(e)}), ERROR_STATUS_CODE
+        return jsonify({'error': str(e)}), Codes.ERROR
     
 @auth_bp.route('/user', methods=['GET'])
 def get_user():
     try:
         user = supabase.auth.get_user().user
         if not user:
-            return jsonify({'error': 'Not authenticated'}), ERROR_STATUS_CODE
+            return jsonify({'error': 'Not authenticated'}), Codes.ERROR
         else:
             return jsonify({
                 'user': {
                     'id': user.id,
                     'email': user.email
                 }
-            }), SUCCESS_STATUS_CODE
+            }), Codes.SUCCESS
     except Exception as e:
-        return jsonify({'error': str(e)}), ERROR_STATUS_CODE    
+        return jsonify({'error': str(e)}), Codes.ERROR    
