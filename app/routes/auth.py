@@ -1,3 +1,63 @@
+"""
+* AUTHENTICATION MODULE - User Authentication API *
+
+This module provides user authentication endpoints including signup, login, logout,
+and user profile retrieval. It integrates with Supabase Auth for secure user 
+management and session handling.
+
+Endpoints:
+----------
+- POST /signup: Create new user account
+- POST /login: Authenticate user and establish session
+- POST /logout: Terminate user session
+- GET  /user: Retrieve current authenticated user information
+
+Authentication Flow:
+--------------------
+1. Signup: Creates user in Supabase Auth (handles email verification)
+2. Login: Validates credentials, returns access_token for session
+3. Session: Access_token used in Authorization header for subsequent requests
+4. Logout: Invalidates current session token
+
+Security Features:
+------------------
+- Password hashing handled by Supabase Auth
+- JWT token-based authentication
+- Session management with secure tokens
+- Input validation for credentials
+
+Dependencies:
+-------------
+- Flask: Web framework for route handling
+- Supabase: Authentication provider (via supabase_client)
+- Rich: Enhanced console output for debugging
+- Custom status codes from app.routes.status_codes
+
+Error Handling:
+---------------
+- Returns standardized HTTP status codes
+- Consistent JSON error response format
+- Graceful fallback when Supabase is unavailable
+- Detailed logging for debugging (with sensitive data protection)
+
+Integration Notes:
+------------------
+- Requires Supabase environment configuration
+- Supports both JSON and form-data for login flexibility
+- Access tokens should be stored securely client-side
+- All routes except /signup and /login require authentication
+
+Environment Requirements:
+-------------------------
+- SUPABASE_URL and SUPABASE_KEY environment variables
+- Supabase project with Auth enabled
+- Proper CORS configuration for frontend access
+
+Version: 1.0.0
+Author: @AkshatBhatt0786
+Last Updated: 12-01-2026
+"""
+
 from flask import Blueprint, request, jsonify
 from rich import print, print_json
 from app.routes.status_codes import Codes

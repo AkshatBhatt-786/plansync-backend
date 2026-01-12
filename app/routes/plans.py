@@ -1,3 +1,55 @@
+"""
+* PLANS MODULE - Event Planning Management API *
+
+This module provides a comprehensive REST API for managing event plans, guests, 
+tasks, and related functionalities. It serves as the primary interface for 
+event planning operations within the application.
+
+API Structure:
+--------------
+- Plans/Events: Core event planning functionality
+- Event Categories: Pre-defined event types (wedding, birthday, etc.)
+- Guests Management: Guest lists, invitations, and RSVP tracking
+- Tasks: Event-related task management
+- Statistics: Analytics and insights for user events
+
+Authentication:
+---------------
+All endpoints (except public categories) require JWT Bearer token authentication
+in the Authorization header.
+
+Data Models:
+------------
+- Plan: Core event container with metadata and configuration
+- Guest: Individual guest with contact info and RSVP status
+- EventTask: Task items associated with event execution
+- EventCategory: Pre-defined event type classifications
+- GuestRelationship: Guest-to-guest relationship mappings (imported)
+
+Error Handling:
+---------------
+Standardized HTTP status codes from app.routes.status_codes with consistent
+error response format: {'error': 'message'}
+
+Database Integration:
+---------------------
+- Uses Supabase for authentication via get_auth()
+- Implements data access through model classes (Plan, Guest, etc.)
+- Follows repository pattern for data operations
+
+Security Considerations:
+------------------------
+- User ownership validation on all operations
+- Input validation and sanitization
+- Proper authentication checks
+- SQL injection prevention through parameterized queries
+
+* Version: 1.0.0
+* Author: @AkshatBhatt0786
+* Last Updated: 12-01-2026
+
+"""
+
 from flask import Blueprint, request, jsonify, g
 from app.routes.status_codes import Codes
 from app.supabase_client import get_auth
@@ -98,7 +150,7 @@ def get_plans():
         'count': len(plans),
         'limit': limit,
         'offset': offset
-    }), Codes.SUCCESS
+    }), Codes.SUCCESS.value
 
 @plans_bp.route('/<plan_id>', methods=['GET'])
 def get_plan(plan_id):
@@ -122,7 +174,7 @@ def get_plan(plan_id):
         'plan': plan,
         'guests': guests,
         'guests_count': len(guests)
-    }), Codes.SUCCESS
+    }), Codes.SUCCESS.value
 
 @plans_bp.route('/<plan_id>', methods=['PUT'])
 def update_plan(plan_id):
@@ -148,7 +200,7 @@ def update_plan(plan_id):
     return jsonify({
         'message': 'Plan updated successfully',
         'plan': updated
-    }), Codes.SUCCESS
+    }), Codes.SUCCESS.value
 
 @plans_bp.route('/<plan_id>', methods=['DELETE'])
 def delete_plan(plan_id):
@@ -167,10 +219,9 @@ def delete_plan(plan_id):
     if not success:
         return jsonify({'error': 'Failed to delete plan'}), 500
     
-    return jsonify({'message': 'Plan deleted successfully'}), Codes.SUCCESS
+    return jsonify({'message': 'Plan deleted successfully'}), Codes.SUCCESS.value
 
 # ==================== GUESTS ====================
-# ==================== GUESTS (Enhanced) ====================
 
 @plans_bp.route('/<plan_id>/guests', methods=['POST'])
 def add_guest(plan_id):
@@ -261,7 +312,7 @@ def get_guests(plan_id):
         'guests': guests,
         'count': len(guests),
         'rsvp_stats': rsvp_stats
-    }), Codes.SUCCESS
+    }), Codes.SUCCESS.value
 
 @plans_bp.route('/<plan_id>/guests/<guest_id>', methods=['GET'])
 def get_guest(plan_id, guest_id):
@@ -283,7 +334,7 @@ def get_guest(plan_id, guest_id):
     if guest['plan_id'] != plan_id:
         return jsonify({'error': 'Guest does not belong to this plan'}), Codes.ERROR
     
-    return jsonify({'guest': guest}), Codes.SUCCESS
+    return jsonify({'guest': guest}), Codes.SUCCESS.value
 
 @plans_bp.route('/<plan_id>/guests/<guest_id>', methods=['PUT'])
 def update_guest(plan_id, guest_id):
@@ -309,7 +360,7 @@ def update_guest(plan_id, guest_id):
     return jsonify({
         'message': 'Guest updated successfully',
         'guest': guest
-    }), Codes.SUCCESS
+    }), Codes.SUCCESS.value
 
 @plans_bp.route('/<plan_id>/guests/<guest_id>', methods=['DELETE'])
 def delete_guest(plan_id, guest_id):
@@ -331,7 +382,7 @@ def delete_guest(plan_id, guest_id):
     # Update guest count
     Plan.update(plan_id, {'guest_count': max(0, plan['guest_count'] - 1)})
     
-    return jsonify({'message': 'Guest deleted successfully'}), Codes.SUCCESS
+    return jsonify({'message': 'Guest deleted successfully'}), Codes.SUCCESS.value
 
 @plans_bp.route('/<plan_id>/guests/<guest_id>/rsvp', methods=['PUT'])
 def update_guest_rsvp(plan_id, guest_id):
@@ -359,7 +410,7 @@ def update_guest_rsvp(plan_id, guest_id):
     return jsonify({
         'message': f'RSVP updated to {rsvp_status}',
         'guest': guest
-    }), Codes.SUCCESS
+    }), Codes.SUCCESS.value
 
 @plans_bp.route('/<plan_id>/guests/<guest_id>/invite', methods=['POST'])
 def send_invitation(plan_id, guest_id):
@@ -381,7 +432,7 @@ def send_invitation(plan_id, guest_id):
     return jsonify({
         'message': 'Invitation marked as sent',
         'guest': guest
-    }), Codes.SUCCESS
+    }), Codes.SUCCESS.value
 
 # ==================== GUEST PHONES ====================
 
@@ -490,4 +541,4 @@ def get_stats():
         if category:
             stats['by_category'][str(category)] = stats['by_category'].get(str(category), 0) + 1
     
-    return jsonify({'stats': stats}), Codes.SUCCESS
+    return jsonify({'stats': stats}), Codes.SUCCESS.value
