@@ -5,4 +5,5 @@ class Codes(Enum):
     ERROR: int = 400
     NOT_FOUND: int = 404
     SERVICE_NOT_AVAILABLE: int = 500
+    UNAUTHORISED_ACCESS: int = 401
     
